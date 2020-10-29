@@ -1,0 +1,23 @@
+# Distribution / packaging
+.Python
+.pytest_cache
+*.pyc
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+.env.yml
+.venv37
+node_modules/
+
+# Serverless directories
+.serverless

@@ -1,0 +1,15 @@
+# role's statements for AWS lambda to access AWS RDS
+RDSConnectionManagement:
+  Effect: Allow
+  Action:
+    - rds:*
+  Resource:
+    - "arn:aws:rds:us-east-2:972267282246:db:teamcity-agents-rds"
+
+# role's statements for AWS lambda to access AWS S3
+S3ConnectionManagement:
+  Effect: Allow
+  Action:
+    - s3:*
+  Resource:
+    - "arn:aws:s3:::github-actions-tests-reports-dev"

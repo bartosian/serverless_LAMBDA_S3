@@ -1,0 +1,32 @@
+service: aws-teamcity-lambda
+frameworkVersion: '2'
+
+custom:
+  bucket: ${file(.env.yml):${self:provider.stage}.BUCKET_NAME}
+  region: ${opt:region, self:provider.region}
+
+provider:
+  name: aws
+  runtime: python3.7
+  memorySize: 256
+  stackName: ${self:service}-${self:provider.stage}
+  stage: ${opt:stage, 'dev'}
+  region: 'us-east-2'
+  iamRoleStatements:
+    - ${file(iam/RDSFromS3LambdaIAM.yml):RDSConnectionManagement}
+    - ${file(iam/RDSFromS3LambdaIAM.yml):S3ConnectionManagement}
+  environment: ${file(.env.yml):${self:provider.stage}}
+
+functions:
+  update-template-db:
+    handler: src/updateTemplate.handler
+    events:
+      - s3:
+          bucket: ${self:custom.bucket}
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: ${file(.env.yml):${self:provider.stage}.BUCKET_FOLDER_PATH}
+          existing: true
+
+plugins:
+  - serverless-python-requirements
