@@ -2,3 +2,4 @@ boto3 #no-deploy
 botocore #no-deploy
 glom #no-deploy
 requests #no-deploy
+psycopg2 #no-deploy
