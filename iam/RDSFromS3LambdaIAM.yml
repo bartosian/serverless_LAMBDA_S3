@@ -4,7 +4,7 @@ RDSConnectionManagement:
   Action:
     - rds:*
   Resource:
-    - "arn:aws:rds:us-east-2:972267282246:db:database-1"
+    - "arn:aws:rds:us-east-2:972267282246:db:database-1/*"
 
 # role's statements for AWS lambda to access AWS S3
 S3ConnectionManagement:

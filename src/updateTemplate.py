@@ -3,7 +3,6 @@ import boto3
 import botocore
 import os
 import requests
-import subprocess
 from operator import itemgetter
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
@@ -51,7 +50,7 @@ def create_db(**opts):
       = itemgetter('database', 'user', 'host', 'password', 'temp_database')(opts)
 
     try:
-        con = psycopg2.connect(dbname=database, post="5432",
+        con = psycopg2.connect(dbname=database, port="5432",
                                user=user, host=host,
                                password=password)
     except Exception as err:
@@ -61,13 +60,18 @@ def create_db(**opts):
     con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cur = con.cursor()
 
+    print("DROP DATABASE {} ;".format(temp_database))
+
     try:
         cur.execute("DROP DATABASE {} ;".format(temp_database))
+        print("Dropped database")
     except Exception as err:
+        print(err)
         print('DB does not exist, nothing to drop')
 
     cur.execute("CREATE DATABASE {} ;".format(temp_database))
     cur.execute("GRANT ALL PRIVILEGES ON DATABASE {} TO {} ;".format(temp_database, user))
+    print("Created database")
 
 def restore_postgres_db(**opts):
     """
@@ -91,7 +95,7 @@ def restore_postgres_db(**opts):
         output = process.communicate()[0]
         if int(process.returncode) != 0:
             print('Command failed. Return code : {}'.format(process.returncode))
-
+        print("Restored")
         return output
     except Exception as err:
         print("Issue with the db restore : {}".format(err))
@@ -113,6 +117,8 @@ def handler(event, context):
 
     # download latest sql file from S3 and save it in temp dir
     DEST_FILE_PATH = download_from_s3()
+
+    print(DEST_FILE_PATH)
 
     # clean database from previous data
     create_db(database=DB_NAME,
