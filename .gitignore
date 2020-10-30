@@ -16,7 +16,7 @@ var/
 .installed.cfg
 *.egg
 .env.yml
-.venv37
+venv37
 node_modules/
 
 # Serverless directories

@@ -36,10 +36,26 @@ def download_from_s3():
         return DEST_FILE
     except botocore.exceptions.ClientError as err:
         if e.response['Error']['Code'] == "404":
-            print(err)
-            return generate_response(404, err)
+            print("No file in S3 to download.")
+            return generate_response(404, "Error downloading file from S3.")
         else:
             raise
+
+def connect_to_db(database, user, host, password):
+    try:
+        con = psycopg2.connect(dbname=database, port="5432",
+                               user=user, host=host,
+                               password=password)
+
+        print(con.get_dsn_parameters(),"\n")
+    except Exception as err:
+        print("Issue with connection to {}".format(database))
+        return generate_response(400, err)
+
+    con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+    cur = con.cursor()
+
+    return con, cur
 
 def create_db(**opts):
     """
@@ -49,29 +65,20 @@ def create_db(**opts):
     database, user, host, password, temp_database \
       = itemgetter('database', 'user', 'host', 'password', 'temp_database')(opts)
 
-    try:
-        con = psycopg2.connect(dbname=database, port="5432",
-                               user=user, host=host,
-                               password=password)
-    except Exception as err:
-        print(err)
-        return generate_response(400, err)
-
-    con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-    cur = con.cursor()
-
-    print("DROP DATABASE {} ;".format(temp_database))
+    con, cur = connect_to_db(database, user, host, password)
 
     try:
         cur.execute("DROP DATABASE {} ;".format(temp_database))
-        print("Dropped database")
     except Exception as err:
-        print(err)
         print('DB does not exist, nothing to drop')
 
     cur.execute("CREATE DATABASE {} ;".format(temp_database))
     cur.execute("GRANT ALL PRIVILEGES ON DATABASE {} TO {} ;".format(temp_database, user))
-    print("Created database")
+
+    if(con):
+        cur.close()
+        con.close()
+        print("PostgreSQL connection is closed")
 
 def restore_postgres_db(**opts):
     """
@@ -81,31 +88,28 @@ def restore_postgres_db(**opts):
     database, user, host, password, temp_database, sql_file \
       = itemgetter('database', 'user', 'host', 'password', 'temp_database', 'sql_file')(opts)
 
+
+    con, cur = connect_to_db(temp_database, user, host, password)
+
     try:
-        process = subprocess.Popen(
-            ['PGPASSWORD={}'.format(password),
-             'psql',
-             '--host={}'.format(host),
-             '--port=5432',
-             '--username={}'.format(user),
-             '--dbname={}'.format(temp_database),
-             '-f {}'.format(sql_file)],
-            stdout=subprocess.PIPE
-        )
-        output = process.communicate()[0]
-        if int(process.returncode) != 0:
-            print('Command failed. Return code : {}'.format(process.returncode))
-        print("Restored")
-        return output
+        sql_file = open(sql_file, 'r')
+        cur.execute(sql_file.read())
+
+        print("Restored database {}".format(temp_database))
     except Exception as err:
         print("Issue with the db restore : {}".format(err))
-        return generate_response(400, err)
+        return generate_response(400, "Error restoring database with .sql file.")
+    finally:
+        if(con):
+            cur.close()
+            con.close()
+
+            print("PostgreSQL connection is closed")
 
 def handler(event, context):
     """
     Respond to event fron S3 bucket file uploaded.
     """
-
     print("-=-=-= GOT EVENT -=-=-=-")
     print(event)
 
@@ -117,8 +121,6 @@ def handler(event, context):
 
     # download latest sql file from S3 and save it in temp dir
     DEST_FILE_PATH = download_from_s3()
-
-    print(DEST_FILE_PATH)
 
     # clean database from previous data
     create_db(database=DB_NAME,

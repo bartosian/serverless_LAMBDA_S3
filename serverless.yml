@@ -5,6 +5,11 @@ custom:
   bucket: ${file(.env.yml):${self:provider.stage}.BUCKET_NAME}
   region: ${opt:region, self:provider.region}
 
+package:
+  exclude:
+    - node_modules/**
+    - .pytest_cache/**
+
 provider:
   name: aws
   runtime: python3.7
