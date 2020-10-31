@@ -16,7 +16,7 @@ provider:
   memorySize: 256
   stackName: ${self:service}-${self:provider.stage}
   stage: ${opt:stage, 'dev'}
-  region: 'us-east-2'
+  region: 'us-east-1'
   iamRoleStatements:
     - ${file(iam/RDSFromS3LambdaIAM.yml):RDSConnectionManagement}
     - ${file(iam/RDSFromS3LambdaIAM.yml):S3ConnectionManagement}
