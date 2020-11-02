@@ -24,6 +24,7 @@ provider:
 
 functions:
   update-template-db:
+    description: 'Update database in RDS for TeamCity.'
     handler: src/updateTemplate.handler
     events:
       - s3:
