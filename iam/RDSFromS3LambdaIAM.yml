@@ -4,7 +4,7 @@ RDSConnectionManagement:
   Action:
     - rds:*
   Resource:
-    - "arn:aws:rds:us-east-1:633233947399:db:teamcity-agents-rds/*"
+    - "arn:aws:rds:us-east-1:420372242210:db:teamcity-agents-rds/*"
 
 # role's statements for AWS lambda to access AWS S3
 S3ConnectionManagement:
