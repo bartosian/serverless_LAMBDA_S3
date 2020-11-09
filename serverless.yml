@@ -1,10 +1,6 @@
 service: aws-teamcity-lambda
 frameworkVersion: '2'
 
-custom:
-  bucket: ${file(.env.yml):${self:provider.stage}.BUCKET_NAME}
-  region: ${opt:region, self:provider.region}
-
 package:
   exclude:
     - node_modules/**
@@ -17,18 +13,17 @@ provider:
   stackName: ${self:service}-${self:provider.stage}
   stage: ${opt:stage, 'dev'}
   region: 'us-east-1'
-  iamRoleStatements:
-    - ${file(iam/RDSFromS3LambdaIAM.yml):RDSConnectionManagement}
-    - ${file(iam/RDSFromS3LambdaIAM.yml):S3ConnectionManagement}
+  role: arn:aws:iam::633233947399:role/LambdaDevelopmentRole
   environment: ${file(.env.yml):${self:provider.stage}}
 
 functions:
   update-template-db:
     description: 'Update database in RDS for TeamCity.'
     handler: src/updateTemplate.handler
+    role: arn:aws:iam::633233947399:role/LambdaDevelopmentRole
     events:
       - s3:
-          bucket: ${self:custom.bucket}
+          bucket: github-actions-tests-reports
           event: s3:ObjectCreated:*
           rules:
             - prefix: ${file(.env.yml):${self:provider.stage}.BUCKET_FOLDER_PATH}

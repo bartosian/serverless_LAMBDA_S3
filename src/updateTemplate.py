@@ -2,7 +2,6 @@ import json
 import boto3
 import botocore
 import os
-import requests
 from operator import itemgetter
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
@@ -35,7 +34,7 @@ def download_from_s3():
 
         return DEST_FILE
     except botocore.exceptions.ClientError as err:
-        if e.response['Error']['Code'] == "404":
+        if err.response['Error']['Code'] == "404":
             print("No file in S3 to download.")
             return generate_response(404, "Error downloading file from S3.")
         else:
